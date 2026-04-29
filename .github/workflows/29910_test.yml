@@ -1,0 +1,91 @@
+name: 29910 Test
+
+# Workflow se sproži ob vsakem pushu na vejo main
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  preveri-teste:
+    # Prvi posel preveri, ali testna skripta obstaja
+    name: Preveri obstoj testov
+    runs-on: [self-hosted, linux]
+
+    steps:
+      # Prenese kodo iz GitHub repozitorija
+      - name: Prenesi repozitorij
+        uses: actions/checkout@v4
+
+      # Preverimo, ali obstaja mapa tests in datoteka tests/test.sh
+      # Standardno napako preusmerimo v napaka.txt
+      - name: Preveri testne skripte
+        run: |
+          touch napaka.txt
+
+          if [ ! -d "tests" ]; then
+            echo "Mapa tests ne obstaja!" 2> napaka.txt
+            exit 1
+          fi
+
+          if [ ! -f "tests/test.sh" ]; then
+            echo "Datoteka tests/test.sh ne obstaja!" 2> napaka.txt
+            exit 1
+          fi
+
+          if [ ! -s napaka.txt ]; then
+            echo "Testne skripte obstajajo."
+          fi
+
+      # Datoteko napaka.txt shranimo kot artefakt,
+      # da jo lahko uporabi naslednji posel
+      - name: Naloži artefakt napaka.txt
+        uses: actions/upload-artifact@v4
+        with:
+          name: napaka
+          path: napaka.txt
+
+  izvedi-teste:
+    # Drugi posel je odvisen od prvega
+    name: Pripravi okolje in izvedi teste
+    needs: preveri-teste
+    runs-on: [self-hosted, linux]
+
+    # Uporaba matrice - test lahko zaženemo z več prevajalniki
+    strategy:
+      matrix:
+        compiler: [g++]
+
+    steps:
+      - name: Prenesi repozitorij
+        uses: actions/checkout@v4
+
+      # Prenesemo artefakt iz prvega posla
+      - name: Prenesi artefakt napaka.txt
+        uses: actions/download-artifact@v4
+        with:
+          name: napaka
+
+      # Preverimo, ali je napaka.txt prazen
+      # Če ni prazen, prekinemo izvajanje
+      - name: Preveri vsebino napaka.txt
+        run: |
+          if [ -s napaka.txt ]; then
+            echo "V prvem poslu je prišlo do napake:"
+            cat napaka.txt
+            exit 1
+          fi
+
+          echo "napaka.txt je prazen, nadaljujem s testi."
+
+      # Pripravimo izvajalno okolje za C++ teste
+      - name: Namesti potrebna orodja
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      # Zaženemo lastno testno skripto
+      - name: Zaženi teste
+        run: |
+          chmod +x tests/test.sh
+          CXX=${{ matrix.compiler }} ./tests/test.sh
