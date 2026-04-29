@@ -38,4 +38,6 @@ jobs:
         with:
           context: .
           push: true
+          provenance: false
+          sbom: false
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/vaja5:latest
