@@ -22,17 +22,21 @@ jobs:
     steps:
       - name: Prenesi repozitorij
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Ustvari datum za tag
-        id: datum
-        run: echo "date=$(date +'%Y-%m-%d--%M-%S')" >> "$GITHUB_ENV"
+        run: echo "DATE_TAG=$(date +'%Y-%m-%d--%H-%M-%S')" >> "$GITHUB_ENV"
 
-      - name: Potisni na DockerHub z akcijo
-        uses: mr-smithers-excellent/docker-build-push@v6
-        with:
-          username: ${{ env.DOCKER_USERNAME }}
-          password: ${{ env.DOCKER_PASSWORD }}
-          registry: docker.io
-          dockerfile: Dockerfile
-          tags: latest,${{ env.date }}
-          image: ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}
+      - name: Prijava v DockerHub
+        run: echo "${{ env.DOCKER_PASSWORD }}" | docker login -u "${{ env.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Zgradi Docker image
+        run: |
+          docker build -t ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:latest \
+                       -t ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:${{ env.DATE_TAG }} .
+
+      - name: Potisni Docker image
+        run: |
+          docker push ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:latest
+          docker push ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:${{ env.DATE_TAG }}
