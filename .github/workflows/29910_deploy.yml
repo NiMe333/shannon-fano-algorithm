@@ -7,20 +7,19 @@ env:
 
 on:
   workflow_run:
-    workflows:
-      - 29910 Test
+    workflows: ["29910 Test"]
     types:
       - completed
 
 jobs:
   deploy:
-    name: Zgradi in objavi Docker image
-    runs-on: [self-hosted]
+    name: Deploy Docker image
+    runs-on: self-hosted
 
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      - name: Prenesi repozitorij
+      - name: Checkout repozitorija
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
@@ -36,7 +35,7 @@ jobs:
           docker build -t ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:latest \
                        -t ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:${{ env.DATE_TAG }} .
 
-      - name: Potisni Docker image
+      - name: Potisni Docker image na DockerHub
         run: |
           docker push ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:latest
           docker push ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:${{ env.DATE_TAG }}
