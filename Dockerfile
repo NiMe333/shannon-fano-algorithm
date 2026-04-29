@@ -1,17 +1,20 @@
-# 1. faza: build
-FROM gcc:13 AS build
+FROM alpine:latest AS build
 
 WORKDIR /app
-COPY . .
 
-RUN g++ -Wall -Wextra -std=c++17 vaja5.cpp -o vaja5
+RUN apk add --no-cache g++
+
+COPY vaja5.cpp .
+COPY test.txt .
+
+RUN g++ -Wall -Wextra -std=c++17 vaja5.cpp -static -o vaja5
 
 
-# 2. faza: končna aplikacija
-FROM debian:bookworm-slim
+FROM alpine:latest
 
 WORKDIR /app
 
 COPY --from=build /app/vaja5 .
+COPY --from=build /app/test.txt .
 
 CMD ["./vaja5"]

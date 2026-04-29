@@ -15,7 +15,7 @@ on:
 jobs:
   deploy:
     name: Zgradi in objavi Docker image
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted]
 
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 

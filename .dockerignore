@@ -1,0 +1,4 @@
+.git
+actions-runner
+*.bin
+out*
