@@ -25,17 +25,15 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Ustvari datum za tag
-        run: echo "DATE_TAG=$(date +'%Y-%m-%d--%H-%M-%S')" >> "$GITHUB_ENV"
+        id: datum
+        run: echo "date=$(date +'%Y-%m-%d--%M-%S')" >> "$GITHUB_ENV"
 
-      - name: Prijava v DockerHub
-        run: echo "${{ env.DOCKER_PASSWORD }}" | docker login -u "${{ env.DOCKER_USERNAME }}" --password-stdin
-
-      - name: Zgradi Docker image
-        run: |
-          docker build -t ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:latest \
-                       -t ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:${{ env.DATE_TAG }} .
-
-      - name: Potisni Docker image na DockerHub
-        run: |
-          docker push ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:latest
-          docker push ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}:${{ env.DATE_TAG }}
+      - name: Potisni na docker hub
+        uses: mr-smithers-excellent/docker-build-push@v6
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+          registry: docker.io
+          dockerfile: Dockerfile
+          tags: $date
+          image: ${{env.DOCKER_USERNAME}}/${{ env.REPONAME }}
