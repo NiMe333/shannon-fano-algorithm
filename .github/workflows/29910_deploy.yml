@@ -2,7 +2,7 @@ name: 29910 Deploy
 
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-  DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
   REPONAME: vaja5
 
 on:
@@ -32,7 +32,7 @@ jobs:
         uses: mr-smithers-excellent/docker-build-push@v6
         with:
           username: ${{ env.DOCKER_USERNAME }}
-          password: ${{ env.DOCKER_PASSWORD }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
           registry: docker.io
           dockerfile: Dockerfile
           tags: $date
