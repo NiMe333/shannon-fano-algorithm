@@ -3,7 +3,7 @@ name: 29910 Deploy
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-  REPONAME: vaja5
+  REPONAME: "vaja5"
 
 on:
   workflow_run:
@@ -36,4 +36,4 @@ jobs:
           registry: docker.io
           dockerfile: Dockerfile
           tags: $date
-          image: ${{env.DOCKER_USERNAME}}/${{ env.REPONAME }}
+          image: ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}
