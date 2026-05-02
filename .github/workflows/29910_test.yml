@@ -10,7 +10,7 @@ jobs:
   preveri-teste:
     # Prvi posel preveri, ali testna skripta obstaja
     name: Preveri obstoj testov
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted]
 
     steps:
       # Prenese kodo iz GitHub repozitorija
