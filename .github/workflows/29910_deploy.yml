@@ -24,7 +24,7 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Ustvari datum za tag
+      - name: Ustvari datum
         run: echo "DATE=$(date +'%Y-%m-%d--%M-%S')" >> "$GITHUB_ENV"
 
       - name: Potisni na Docker Hub
