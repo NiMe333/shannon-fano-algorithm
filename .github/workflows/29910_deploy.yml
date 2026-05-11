@@ -54,7 +54,6 @@ jobs:
 
           # Docker tagi:
           # latest -> zadnja verzija
-          # DATE -> verzioniran image z datumom
           tags: latest,${{ env.DATE }}
 
           # Končno ime Docker image-a
