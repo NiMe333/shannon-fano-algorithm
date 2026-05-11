@@ -1,38 +1,61 @@
+# Ime deploy workflowa
 name: 29910 Deploy
 
+# Globalne okoljske spremenljivke
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
   REPONAME: vaja5
 
+# Workflow se sproži po zaključku drugega workflowa
 on:
   workflow_run:
     workflows: ["29910 Test"]
+    # Sproži se ob zaključku workflowa
     types:
       - completed
 
 jobs:
+  # Job za build in deploy Docker image-a
   deploy:
     name: Deploy Docker image
     runs-on: [self-hosted, macOS, ARM64]
 
+    # Job se izvede samo, če je testni workflow uspešno zaključen
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
+      # Prenesemo repozitorij
       - name: Checkout repozitorija
         uses: actions/checkout@v4
+
+        # Checkout naredimo na istem commitu, ki je uspešno prestal testiranje
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Ustvari datum za tag
-        run: echo "DATE=$(date +'%Y-%m-%d--%M-%S')" >> "$GITHUB_ENV"
 
+        # Datum shranimo v GitHub environment variable DATE
+        run: echo "DATE=$(date +'%Y-%m-%d--%H-%M-%S')" >> "$GITHUB_ENV"
+
+      # Build in push Docker image-a na DockerHub
       - name: Potisni na Docker Hub
         uses: mr-smithers-excellent/docker-build-push@v6
+
         with:
           username: ${{ env.DOCKER_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
+
+          # Docker registry
           registry: docker.io
+
+          # Pot do Dockerfile-a
           dockerfile: Dockerfile
-          tags: ${{ env.DATE }}
+
+          # Docker tagi:
+          # latest -> zadnja verzija
+          # DATE -> verzioniran image z datumom
+          tags: latest,${{ env.DATE }}
+
+          # Končno ime Docker image-a
           image: ${{ env.DOCKER_USERNAME }}/${{ env.REPONAME }}

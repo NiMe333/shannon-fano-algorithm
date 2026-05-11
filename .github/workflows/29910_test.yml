@@ -1,59 +1,84 @@
 name: 29910 Test
 
+# Workflow se sproži ob vsakem pushu na vejo main
 on:
   push:
     branches:
       - main
 
 jobs:
+  # Prvi job preveri, ali obstajajo testne datoteke
   preveri-teste:
+    # Ime joba v GitHub Actions vmesniku
     name: Preveri obstoj testov
     runs-on: [self-hosted, macOS, ARM64]
 
     steps:
+      # Prenese GitHub repozitorij na runner
       - name: Prenesi repozitorij
         uses: actions/checkout@v4
 
+      # Preveri, ali obstaja mapa tests
+      # in datoteka tests/test.sh
       - name: Preveri testne skripte
         run: |
+
+          # Ustvarimo prazno datoteko za napake
           touch napaka.txt
 
+          # Če mapa tests ne obstaja
           if [ ! -d "tests" ]; then
             echo "Mapa tests ne obstaja!" > napaka.txt
             exit 1
           fi
 
+          # Če datoteka test.sh ne obstaja
           if [ ! -f "tests/test.sh" ]; then
             echo "Datoteka tests/test.sh ne obstaja!" > napaka.txt
             exit 1
           fi
 
+          # Če je vse v redu
           echo "Testne skripte obstajajo."
 
+      # Datoteko napaka.txt shranimo kot artefakt
       - name: Naloži artefakt napaka.txt
         uses: actions/upload-artifact@v4
         with:
           name: napaka
           path: napaka.txt
 
+  # Drugi job izvede dejanske teste
   izvedi-teste:
+    # Job se zažene šele po uspešnem zaključku prvega
     name: Pripravi okolje in izvedi teste
     needs: preveri-teste
-    runs-on: [self-hosted, macOS, ARM64]
 
+    # runs-on uporablja matrix konfiguracijo
+    runs-on: ${{ matrix.os }}
+
+    # Matrix omogoča testiranje z različnimi sistemi in prevajalniki
     strategy:
       matrix:
-        compiler: [clang++]
+        include:
+          - os: [self-hosted, macOS, ARM64]
+            compiler: clang++
+
+          - os: [self-hosted, linux]
+            compiler: g++
 
     steps:
+      # Prenesemo repozitorij
       - name: Prenesi repozitorij
         uses: actions/checkout@v4
 
+      # Prenesemo artefakt napaka.txt iz prvega joba
       - name: Prenesi artefakt napaka.txt
         uses: actions/download-artifact@v4
         with:
           name: napaka
 
+      # Preverimo, ali je datoteka prazna
       - name: Preveri vsebino napaka.txt
         run: |
           if [ -s napaka.txt ]; then
@@ -64,10 +89,12 @@ jobs:
 
           echo "napaka.txt je prazen, nadaljujem s testi."
 
+      # Izpišemo verzijo izbranega prevajalnika
       - name: Preveri C++ prevajalnik
         run: |
-          clang++ --version
+          ${{ matrix.compiler }} --version
 
+      # Zaženemo testno skripto
       - name: Zaženi teste
         run: |
           chmod +x tests/test.sh
