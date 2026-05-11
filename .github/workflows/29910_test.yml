@@ -64,7 +64,7 @@ jobs:
           - os: [self-hosted, macOS, ARM64]
             compiler: clang++
 
-          - os: [self-hosted, linux]
+          - os: ubuntu-latest
             compiler: g++
 
     steps:
