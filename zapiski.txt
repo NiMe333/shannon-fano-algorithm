@@ -1,0 +1,17 @@
+g++ vaja5.cpp -o vaja5
+./vaja5 <c ali d> <binarna_datoteka>
+
+Izhodne datoteke:
+-----------------
+Pri kompresiji program zapiše rezultat v:
+  out.bin
+
+Pri dekompresiji program zapiše rezultat v:
+  out_d.bin
+
+./vaja5 c test.txt
+./vaja5 c primeri_vhoda/testna_datoteka.txt
+./vaja5 c primeri_vhoda/testna_slika.bmp
+./vaja5 c primeri_vhoda/testna_tabela.csv
+
+./vaja5 d out.bin

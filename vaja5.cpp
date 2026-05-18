@@ -7,7 +7,7 @@
 
 using namespace std;
 
-bool DEBUG = false;
+bool DEBUG = true;
 
 class BinWriter
 {
