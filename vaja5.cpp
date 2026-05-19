@@ -501,7 +501,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        cout << "Napaka: uporabi c za kompresijo ali d za dekompresijo." << endl;
+        cout << "Napaka: uporabi c za kompresijo ali d za dekompresijo!" << endl;
         return 1;
     }
 
