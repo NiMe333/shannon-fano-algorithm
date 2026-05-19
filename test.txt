@@ -1,5 +1,1 @@
-GitHub
-https://github.com/NiMe333/shannon-fano-algorithm
-
-Docker Hub
-https://hub.docker.com/repository/docker/nottoxic999/vaja5/general
+ABRACADABRA

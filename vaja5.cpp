@@ -122,11 +122,12 @@ vector<unsigned char> preberiDatoteko(const char *pot)
 {
     ifstream in(pot, ios::binary);
 
-    vector<unsigned char> podatki;
+    vector<unsigned char> podatki; // seznam vseh bajtov iz datoteke
     unsigned char c;
 
     while (in.read((char *)&c, 1))
     {
+        // beri po 1 byte in ga dodaj v vector
         podatki.push_back(c);
         // cout << " ('" << c << "')";
     }
@@ -138,10 +139,10 @@ vector<Znak> zgradiSeznam(int frekvence[256])
 {
     vector<Znak> seznam;
 
-    // Napolnimo seznam
+    // Napolnimo seznam - ASCII
     for (int i = 0; i < 256; i++)
     {
-        if (frekvence[i] > 0)
+        if (frekvence[i] > 0) // frekvenca večja od 0 -> znak je v datoteki
         {
             Znak z;
             z.znak = (unsigned char)i;
@@ -151,7 +152,7 @@ vector<Znak> zgradiSeznam(int frekvence[256])
         }
     }
 
-    // Ročno sortiranje seznama po velikosti od največjega do najmanjšega (selection sort)
+    // Sortiranje seznama po velikosti od največjega do najmanjšega (selection sort)
     for (size_t i = 0; i < seznam.size(); i++)
     {
         size_t maxIndex = i;
@@ -206,6 +207,7 @@ void izpisiKode(vector<Znak> &seznam)
              << " | koda: " << z.koda << endl;
     }
 }
+
 void shannonFano(vector<Znak> &seznam, int levo, int desno)
 {
     // Če ima podseznam samo en znak, ga ne delimo več
@@ -233,7 +235,7 @@ void shannonFano(vector<Znak> &seznam, int levo, int desno)
         int desnaVsota = skupnaVsota - levaVsota;
         int razlika = abs(levaVsota - desnaVsota);
 
-        if (razlika <= najmanjsaRazlika)
+        if (razlika <= najmanjsaRazlika) // shranimo najbolšo mejo
         {
             najmanjsaRazlika = razlika;
             najboljsaMeja = i;
@@ -276,13 +278,13 @@ void shannonFano(vector<Znak> &seznam, int levo, int desno)
 
 void kompresiraj(const char *vhodnaDatoteka)
 {
-    // Preberemo vse bajte iz vhodne datoteke
+    // Preberemo vhodno datoteko po bajtih
     vector<unsigned char> podatki = preberiDatoteko(vhodnaDatoteka);
 
-    // Inicializiramo frekvenčno tabelo (256 možnih znakov)
+    // Frekvenčna tabela za vseh 256 možnih bajtov
     int frekvence[256] = {0};
 
-    // Preštejemo pojavitve vsakega znaka
+    // Preštejemo pojavitve vsakega bajta in dobimo frekvenčno tabelo
     for (unsigned char c : podatki)
     {
         frekvence[c]++;
@@ -293,13 +295,13 @@ void kompresiraj(const char *vhodnaDatoteka)
         izpisiFrekvence(frekvence);
     }
 
-    // Iz frekvenc zgradimo seznam znakov
+    // Iz frekvenc naredimo seznam znakov
     vector<Znak> seznam = zgradiSeznam(frekvence);
 
-    // Generiramo Shannon-Fano kode
+    // Ustvarimo Shannon-Fano kode
     if (seznam.size() == 1)
     {
-        seznam[0].koda = "0";
+        seznam[0].koda = "0"; // če je samo npr. AAAA
     }
     else if (seznam.size() > 1)
     {
@@ -311,7 +313,7 @@ void kompresiraj(const char *vhodnaDatoteka)
         izpisiKode(seznam);
     }
 
-    // Naredimo mapo znak -> koda
+    // Tabela za kodiranje: znak -> koda
     map<unsigned char, string> kodirnaTabela;
 
     for (Znak z : seznam)
@@ -320,9 +322,10 @@ void kompresiraj(const char *vhodnaDatoteka)
     }
 
     {
+        // Odpremo izhodno kompresirano datoteko
         BinWriter bw("out.bin");
 
-        // Najprej zapišemo frekvenčno tabelo (256 * 4 byte)
+        // Na začetek zapišemo frekvenčno tabelo
         for (int i = 0; i < 256; i++)
         {
             bw.writeInt(frekvence[i]);
@@ -333,7 +336,7 @@ void kompresiraj(const char *vhodnaDatoteka)
             cout << "\n--- KODIRANJE PODATKOV ---" << endl;
         }
 
-        // Nato zapišemo podatke kot bite
+        // Vsak znak zamenjamo s Shannon-Fano kodo
         for (unsigned char c : podatki)
         {
             string koda = kodirnaTabela[c];
@@ -346,6 +349,7 @@ void kompresiraj(const char *vhodnaDatoteka)
                     cout << "ASCII " << (int)c << " -> " << koda << endl;
             }
 
+            // Kodo zapišemo bit po bit
             for (char bit : koda)
             {
                 bw.writeBit(bit == '1');
@@ -353,10 +357,7 @@ void kompresiraj(const char *vhodnaDatoteka)
         }
     }
 
-    // Izračun kompresijskega razmerja
-    ifstream original(vhodnaDatoteka, ios::binary | ios::ate);
-    ifstream compressed("out.bin", ios::binary | ios::ate);
-
+    // Izračun velikosti kompresiranih podatkov brez frekvenčne tabele
     int m = 0;
 
     for (unsigned char c : podatki)
@@ -364,6 +365,7 @@ void kompresiraj(const char *vhodnaDatoteka)
         m += kodirnaTabela[c].length();
     }
 
+    // Originalna velikost v bitih
     int n = podatki.size() * 8;
 
     cout << "Izhodna datoteka: out.bin" << endl;
@@ -379,16 +381,17 @@ void kompresiraj(const char *vhodnaDatoteka)
 
 void dekompresiraj(const char *vhodnaDatoteka)
 {
+    // Odpremo kompresirano datoteko za branje bitov
     BinReader br(vhodnaDatoteka);
 
     int frekvence[256];
     int steviloZnakov = 0;
 
-    // Preberemo frekvenčno tabelo
+    // Preberemo frekvenčno tabelo iz začetka datoteke
     for (int i = 0; i < 256; i++)
     {
         frekvence[i] = br.readInt();
-        steviloZnakov += frekvence[i];
+        steviloZnakov += frekvence[i]; // skupno število originalnih znakov
     }
 
     if (DEBUG)
@@ -396,9 +399,10 @@ void dekompresiraj(const char *vhodnaDatoteka)
         izpisiFrekvence(frekvence);
     }
 
-    // Zgradimo seznam in ponovno generiramo kode
+    // Iz frekvenc ponovno zgradimo seznam znakov
     vector<Znak> seznam = zgradiSeznam(frekvence);
 
+    // Ponovno ustvarimo Shannon-Fano kode
     if (seznam.size() == 1)
     {
         seznam[0].koda = "0";
@@ -413,7 +417,7 @@ void dekompresiraj(const char *vhodnaDatoteka)
         izpisiKode(seznam);
     }
 
-    // Naredimo mapo koda -> znak
+    // Naredimo obratno tabelo: koda -> znak
     map<string, unsigned char> dekodirnaTabela;
 
     for (Znak z : seznam)
@@ -421,6 +425,7 @@ void dekompresiraj(const char *vhodnaDatoteka)
         dekodirnaTabela[z.koda] = z.znak;
     }
 
+    // Izhodna dekompresirana datoteka
     ofstream out("out_d.bin", ios::binary);
 
     string trenutnaKoda = "";
@@ -432,17 +437,18 @@ void dekompresiraj(const char *vhodnaDatoteka)
         cout << "Stevilo znakov za obnovitev: " << steviloZnakov << endl;
     }
 
-    // Beremo bite in sestavljamo kode
+    // Beremo bite, dokler ne obnovimo vseh originalnih znakov
     while (zapisaniZnaki < steviloZnakov)
     {
         bool bit = br.readBit();
 
+        // Sestavljamo trenutno kodo
         if (bit)
             trenutnaKoda += "1";
         else
             trenutnaKoda += "0";
 
-        // Ko najdemo kodo, jo pretvorimo nazaj v znak
+        // Če koda obstaja, smo našli en znak
         if (dekodirnaTabela.count(trenutnaKoda))
         {
             unsigned char znak = dekodirnaTabela[trenutnaKoda];
@@ -450,13 +456,16 @@ void dekompresiraj(const char *vhodnaDatoteka)
             if (DEBUG)
             {
                 cout << trenutnaKoda << " -> ";
+
                 if (znak >= 32 && znak <= 126)
                     cout << znak;
                 else
                     cout << "ASCII " << (int)znak;
+
                 cout << endl;
             }
 
+            // Znak zapišemo v izhodno datoteko
             out.write((char *)&znak, 1);
 
             trenutnaKoda = "";
